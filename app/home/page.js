@@ -7,10 +7,15 @@ import Step4 from "../components/forms/Step4";
 import ConfirmationStep from "../components/forms/ConfirmationStep"; // Import ConfirmationStep
 import ProgressBar from "../components/forms/ProgressBar";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 const page = () => {
   const [step, setStep] = useState(1);
+  const [data, setData] = useState(""); // Holds server response
+  const [loading, setLoading] = useState(false); // Loading state
+  const [error, setError] = useState(null); // Error state
   const router = useRouter();
+
   const [formData, setFormData] = useState({
     // Step 1 Fields
     vehicleMake: "",
@@ -60,36 +65,30 @@ const page = () => {
 
   const handleSubmit = async () => {
     console.log("Form Submitted:", formData);
-  
+    setLoading(true); // Start loading
+    setError(null); // Reset error state
+
     try {
-      const response = await fetch("/api/submit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-  
-      if (response.ok) {
-        const blob = await response.blob(); // Get the PDF blob
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "form-data.pdf";
-        a.click(); // Trigger the download
-        window.URL.revokeObjectURL(url);
-        console.log("PDF downloaded successfully.");
-      } else {
-        console.error("Failed to generate PDF:", await response);
-      }
+      const response = await axios.post(
+        "https://salmon-starling-407425.hostingersite.com/",
+        formData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      setData(response.data); // Set server response
     } catch (error) {
-      console.error("Network error while submitting form:", error);
+      console.error("Error:", error.response ? error.response.data : error.message);
+      setError(error.response ? error.response.data : "An error occurred.");
+    } finally {
+      setLoading(false); // End loading
     }
   };
-  
-  
+
   return (
-    <div className="max-w-lg mx-auto p-10 my-5 rounded-lg  border-2">
+    <div className="max-w-lg mx-auto p-10 my-5 rounded-lg border-2">
       <ProgressBar step={step} />
       {step === 1 && (
         <Step1 formData={formData} setFormData={setFormData} nextStep={nextStep} />
@@ -119,11 +118,28 @@ const page = () => {
         />
       )}
       {step === 5 && (
-        <ConfirmationStep
-          formData={formData}
-          prevStep={prevStep}
-          handleSubmit={handleSubmit}
-        />
+        <>
+          <ConfirmationStep
+            formData={formData}
+            prevStep={prevStep}
+            handleSubmit={handleSubmit}
+          />
+          {loading && <p>Submitting data, please wait...</p>}
+          {error && <p className="text-red-500">{error}</p>}
+          {data.file_path && (
+            <div className="mt-5">
+              <p className="text-green-600">PDF generated successfully!</p>
+              <a
+                href={data.file_path}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block bg-blue-500 text-white px-4 py-2 rounded mt-2 hover:bg-blue-600"
+              >
+                Download PDF
+              </a>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
