@@ -80,7 +80,7 @@ const page = () => {
         window.URL.revokeObjectURL(url);
         console.log("PDF downloaded successfully.");
       } else {
-        console.error("Failed to generate PDF:", await response.text());
+        console.error("Failed to generate PDF:", await response);
       }
     } catch (error) {
       console.error("Network error while submitting form:", error);
