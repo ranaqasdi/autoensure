@@ -1,25 +1,24 @@
-import playwright from 'playwright-aws-lambda';
+import * as htmlPdf from 'html-pdf-node';
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
-    const data = req.body; // Data from the request
-    const htmlContent = generateHTML(data); // Generate HTML from data
+    const data = req.body; // Extract JSON data from the request
+    const htmlContent = generateHTML(data); // Generate HTML from the data
 
     try {
-      const browser = await playwright.launchChromium();
-      const page = await browser.newPage();
+      // Define the file object with HTML content
+      const file = { content: htmlContent };
 
-      // Set HTML content for the page
-      await page.setContent(htmlContent, { waitUntil: 'load' });
-
-      // Generate PDF from the page
-      const pdfBuffer = await page.pdf({
+      // Define options for the PDF
+      const options = {
         format: 'A4',
         printBackground: true,
-      });
+      };
 
-      await browser.close();
+      // Generate the PDF buffer
+      const pdfBuffer = await htmlPdf.generatePdf(file, options);
 
+      // Send the generated PDF as a response
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader(
         'Content-Disposition',
