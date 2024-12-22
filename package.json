@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
-  },
+  }, 
   "dependencies": {
     "emitter": "^0.0.5",
     "html-pdf-node": "^1.0.8",
