@@ -1,0 +1,14 @@
+{
+    "functions": {
+      "api/*.js": {
+        "runtime": "nodejs16.x",
+        "includeFiles": [
+          "node_modules/playwright-aws-lambda/lib/*"
+        ]
+      }
+    },
+    "env": {
+      "AWS_EXECUTION_ENV": "AWS_Lambda_nodejs16.x"
+    }
+  }
+  
