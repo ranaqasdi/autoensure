@@ -90,18 +90,25 @@ async function generatePDFHtml(data) {
 export async function POST(req) {
   try {
     const formData = await req.json(); // Parse the JSON body
-    const htmlContent = await generatePDFHtml(formData);
+    console.log("Received form data:", formData);
 
-    const browser = await puppeteer.launch();
+    const htmlContent = await generatePDFHtml(formData);
+    console.log("Generated HTML for PDF:", htmlContent);
+
+    const browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox'], // For serverless environments
+    });
     const page = await browser.newPage();
 
     await page.setContent(htmlContent, { waitUntil: "load" });
+    console.log("HTML content loaded in Puppeteer");
 
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
     });
 
+    console.log("PDF generated successfully");
     await browser.close();
 
     return new Response(pdfBuffer, {
@@ -114,8 +121,9 @@ export async function POST(req) {
   } catch (error) {
     console.error("Error processing form submission:", error);
     return new Response(
-      JSON.stringify({ message: "An error occurred while submitting the form" }),
+      JSON.stringify({ message: `An error occurred: ${error.message}` }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }
+
