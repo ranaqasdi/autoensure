@@ -1,5 +1,4 @@
-import chromium from "chrome-aws-lambda";
-import puppeteer from "puppeteer-core";
+import * as htmlPdf from "html-pdf-node";
 
 async function generatePDFHtml(data) {
   const htmlContent = `
@@ -93,35 +92,21 @@ export async function POST(req) {
     const formData = await req.json(); // Parse the JSON body
     const htmlContent = await generatePDFHtml(formData);
 
-    const executablePath = await chromium.executablePath;
-
-    if (!executablePath) {
-      throw new Error("Chromium executable not found. Verify your runtime environment.");
-    }
-
-    const browser = await puppeteer.launch({
-      args: chromium.args,
-      executablePath: executablePath,
-      headless: true,
-      defaultViewport: chromium.defaultViewport,
-    });
-
-    const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: "load" });
-
-    const pdfBuffer = await page.pdf({
+    // Create a PDF from the HTML content
+    const file = { content: htmlContent }; // HTML content as input for html-pdf-node
+    const options = {
       format: "A4",
       printBackground: true,
-    });
+    };
 
-    await browser.close();
+    const pdfBuffer = await htmlPdf.generatePdf(file, options);
 
+    // Return the generated PDF
     return new Response(pdfBuffer, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": 'attachment; filename="form-data.pdf"',
-        "Access-Control-Allow-Origin": "*", // Allow cross-origin requests
       },
     });
   } catch (error) {
